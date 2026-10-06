@@ -202,6 +202,41 @@ VALUES
 ('Fusível de Louça 5A 250V (Pacote c/ 10)', 14, 500, 1800, 20, 7, (SELECT id_cargo FROM funcionario WHERE id = 7)),
 ('Capacitor Eletrolítico 1000uF x 25V', 14, 80, 500, 150, 7, (SELECT id_cargo FROM funcionario WHERE id = 7));
 
+CREATE TABLE IF NOT EXISTS situacao(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	nome TEXT NOT NULL COLLATE NOCASE UNIQUE,
+	status INTEGER NOT NULL DEFAULT 1
+)
+
+CREATE TABLE IF NOT EXISTS forma_pagamento(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	nome TEXT NOT NULL COLLATE NOCASE UNIQUE,
+	status INTEGER NOT NULL DEFAULT 1,
+	data_criacao TEXT NOT NULL DEFAULT (DATETIME('now','localtime')),
+	id_funcionario INTEGER NOT NULL,
+	id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
+	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id,id_cargo)
+)
+
+
+CREATE TABLE IF NOT EXISTS ordem(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id_equipamento INTEGER NOT NULL,
+	id_funcionacio_abertura INTEGER NOT NULL,
+	id_funcionacio_cargo_abertura INTEGER NOT NULL,
+	data_abertura TEXT NOT NULL DEFAULT (DATETIME('now','localtime')),
+	data_fechamento TEXT,
+	defeito_relatado TEXT NO NULL,
+	relatorio TEXT,
+	valor_total INTEGER,
+	id_forma_pagamento INTEGER NOT NULL,
+	id_tecnico_abertura INTEGER NOT NULL,
+	id_tecnico_cargo INTEGER NOT NULL CHECK (id_tecnico_cargo = 3),
+	FOREIGN KEY (id_equipamento) REFERENCES equipamento(id)
+)
+
+
+
 
 SELECT * FROM peca p WHERE p.preco_venda > 10000;
 
