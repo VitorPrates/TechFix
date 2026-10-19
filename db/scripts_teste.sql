@@ -230,9 +230,14 @@ CREATE TABLE IF NOT EXISTS ordem(
 	relatorio TEXT,
 	valor_total INTEGER,
 	id_forma_pagamento INTEGER NOT NULL,
-	id_tecnico_abertura INTEGER NOT NULL,
+	id_funcionario_abertura INTEGER NOT NULL,
+	id_funcionario_cargo_abertura INTEGER NOT NULL CHECK (id_funcionario_cargo_abertura = 1 OR id_funcionario_cargo_abertura = 2),
+	id_tecnico INTEGER NOT NULL,
 	id_tecnico_cargo INTEGER NOT NULL CHECK (id_tecnico_cargo = 3),
-	FOREIGN KEY (id_equipamento) REFERENCES equipamento(id)
+	FOREIGN KEY (id_equipamento) REFERENCES equipamento(id),
+	FOREIGN KEY (id_forma_pagamento) REFERENCES forma_pagamento(id),
+	FOREIGN KEY (id_funcionario_abertura, id_funcionario_cargo_abertura) REFERENCES funcionario(id,id_cargo),
+	FOREIGN KEY (id_tecnico, id_tecnico_cargo) REFERENCES funcionario(id,id_cargo)
 )
 
 
