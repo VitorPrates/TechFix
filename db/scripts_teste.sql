@@ -238,7 +238,42 @@ CREATE TABLE IF NOT EXISTS ordem(
 	FOREIGN KEY (id_forma_pagamento) REFERENCES forma_pagamento(id),
 	FOREIGN KEY (id_funcionario_abertura, id_funcionario_cargo_abertura) REFERENCES funcionario(id,id_cargo),
 	FOREIGN KEY (id_tecnico, id_tecnico_cargo) REFERENCES funcionario(id,id_cargo)
-)
+)STRICT;
+
+CREATE TABLE IF NOT EXISTS ordem_situacao(
+	id integer PRIMARY KEY AUTOINCREMENT,
+	id_ordem integer NOT NULL,
+	id_nova_situacao INTEGER NOT NULL,
+	id_funcionario INTEGER NOT NULL,
+	data_situacao text NOT NULL DEFAULT (datetime("now","localtime")),
+	FOREIGN KEY (id_ordem) REFERENCES ordem(id),
+	FOREIGN KEY (id_nova_situacao) REFERENCES situacao(id),
+	FOREIGN KEY (id_funcionario) REFERENCES funcionario(id)
+)STRICT;
+
+CREATE TABLE IF NOT EXISTS ordem_peca(
+	id integer PRIMARY KEY AUTOINCREMENT,
+	id_ordem integer NOT NULL,
+	id_peca INTEGER NOT NULL,
+	preco INTEGER NOT NULL,
+	quantidade INTEGER NOT NULL,
+	data_saida text NOT NULL DEFAULT (datetime("now","localtime")),
+	FOREIGN KEY (id_ordem) REFERENCES ordem(id),
+	FOREIGN KEY (id_peca) REFERENCES peca(id)
+)STRICT;
+
+CREATE TABLE IF NOT EXISTS ordem_servico(
+	id integer PRIMARY KEY AUTOINCREMENT,
+	id_ordem integer NOT NULL,
+	id_servico INTEGER NOT NULL,
+	preco_praticado INTEGER NOT NULL,
+	quantidade_servicos INTEGER NOT NULL,
+	data_execucao text NOT NULL DEFAULT (datetime("now","localtime")),
+	FOREIGN KEY (id_ordem) REFERENCES ordem(id),
+	FOREIGN KEY (id_servico) REFERENCES servicos(id)
+)STRICT;
+
+
 
 
 
