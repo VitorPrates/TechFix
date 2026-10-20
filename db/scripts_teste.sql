@@ -207,6 +207,13 @@ CREATE TABLE IF NOT EXISTS situacao(
 	nome TEXT NOT NULL COLLATE NOCASE UNIQUE,
 	status INTEGER NOT NULL DEFAULT 1
 )
+-- aberto, em diag, orçamento aprovado, em reparo, pronto, entregue, cancelado, descarte por defeito/avaria, Uso em Reparo (os)
+--teste
+INSERT INTO situacao (nome, status) VALUES ("Aberto",1),("Em Diagnóstico",1);
+--todos
+INSERT INTO situacao (nome, status) VALUES ("Orçamento Apovado",1),("Em reparo",1),("Pronto",1),("Entregue",1),("Cancelado",1),("Descarte por Defeito/Avaria",1),("Uso em Reparo (OS)",1);
+
+
 
 CREATE TABLE IF NOT EXISTS forma_pagamento(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -217,6 +224,8 @@ CREATE TABLE IF NOT EXISTS forma_pagamento(
 	id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
 	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id,id_cargo)
 )
+
+
 
 
 CREATE TABLE IF NOT EXISTS ordem(
@@ -272,9 +281,6 @@ CREATE TABLE IF NOT EXISTS ordem_servico(
 	FOREIGN KEY (id_ordem) REFERENCES ordem(id),
 	FOREIGN KEY (id_servico) REFERENCES servicos(id)
 )STRICT;
-
-
-
 
 
 
