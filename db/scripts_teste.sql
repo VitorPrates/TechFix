@@ -235,7 +235,7 @@ CREATE TABLE IF NOT EXISTS ordem(
 	id_funcionacio_cargo_abertura INTEGER NOT NULL,
 	data_abertura TEXT NOT NULL DEFAULT (DATETIME('now','localtime')),
 	data_fechamento TEXT,
-	defeito_relatado TEXT NO NULL,
+	defeito_relatado TEXT NOT NULL,
 	relatorio TEXT,
 	valor_total INTEGER,
 	id_forma_pagamento INTEGER NOT NULL,
@@ -254,7 +254,7 @@ CREATE TABLE IF NOT EXISTS ordem_situacao(
 	id_ordem integer NOT NULL,
 	id_nova_situacao INTEGER NOT NULL,
 	id_funcionario INTEGER NOT NULL,
-	data_situacao text NOT NULL DEFAULT (datetime("now","localtime")),
+	data_situacao TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
 	FOREIGN KEY (id_ordem) REFERENCES ordem(id),
 	FOREIGN KEY (id_nova_situacao) REFERENCES situacao(id),
 	FOREIGN KEY (id_funcionario) REFERENCES funcionario(id)
@@ -266,7 +266,7 @@ CREATE TABLE IF NOT EXISTS ordem_peca(
 	id_peca INTEGER NOT NULL,
 	preco INTEGER NOT NULL,
 	quantidade INTEGER NOT NULL,
-	data_saida text NOT NULL DEFAULT (datetime("now","localtime")),
+	data_saida TEXT NOT NULL DEFAULT (DATETIME('now','localtime')),
 	FOREIGN KEY (id_ordem) REFERENCES ordem(id),
 	FOREIGN KEY (id_peca) REFERENCES peca(id)
 )STRICT;
@@ -277,12 +277,14 @@ CREATE TABLE IF NOT EXISTS ordem_servico(
 	id_servico INTEGER NOT NULL,
 	preco_praticado INTEGER NOT NULL,
 	quantidade_servicos INTEGER NOT NULL,
-	data_execucao text NOT NULL DEFAULT (datetime("now","localtime")),
+	data_execucao text NOT NULL DEFAULT (datetime('now','localtime')),
 	FOREIGN KEY (id_ordem) REFERENCES ordem(id),
 	FOREIGN KEY (id_servico) REFERENCES servicos(id)
 )STRICT;
 
-
+-- ==========================================
+-- TESTES
+-- ==========================================
 
 SELECT * FROM peca p WHERE p.preco_venda > 10000;
 
@@ -290,3 +292,78 @@ CREATE VIEW vw_preco_venda_maior_100 AS SELECT id,nome,preco_venda, estoque_atua
 
 SELECT * FROM vw_preco_venda_maior_100 vpvm 
 
+-- ==========================================
+-- 2. POPULAÇÃO DE DADOS (DML)
+-- ==========================================
+INSERT
+	INTO
+	ordem (
+		id_equipamento,
+		defeito_relatado,
+		relatorio,
+		data_abertura,
+		data_fechamento,
+		valor_total,
+		id_forma_pagamento,
+		id_funcionario_abertura,
+		id_funcionario_cargo_abertura,
+		id_tecnico,
+		id_tecnico_cargo
+	)
+VALUES
+-- OS 1: Troca de tela do iPhone 11 (Entregue)
+	(
+		1,
+		'Tela quebrada após queda.',
+		'Display frontal danificado, toque não responde.',
+		'2026-09-01 09:30:00',
+		'2026-09-02 16:00:00',
+		50000,
+		2,
+		2,
+		2,
+		5,
+		3
+	),
+-- OS 2: Upgrade de SSD em Notebook Dell (Pronto)
+	(
+		3,
+		'Notebook muito lento para ligar.',
+		'Lentidão provocada por HD mecânico antigo.',
+		'2026-09-10 10:15:00',
+		'2026-09-11 14:30:00',
+		38000,
+		1,
+		3,
+		2,
+		6,
+		3
+	),
+-- OS 3: Smart TV em diagnóstico
+	(
+		4,
+		'TV com som, mas imagem não aparece.',
+		'Barra de LED queimada.',
+		'2026-09-15 11:00:00',
+		NULL,
+		NULL,
+		1,
+		2,
+		2,
+		5,
+		3
+	),
+-- OS 4: Console PS5 (Em Reparo)
+	(
+		5,
+		'Desligando por aquecimento.',
+		'Acúmulo severo de poeira e necessidade de troca de pasta térmica.',
+		'2026-09-20 14:20:00',
+		NULL,
+		NULL,
+		4,
+		4,
+		2,
+		6,
+		3
+	);
