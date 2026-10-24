@@ -47,6 +47,61 @@ CREATE TABLE IF NOT EXISTS cliente(
 
 INSERT INTO cliente (nome_cliente, email,cpf, id_funcionario, id_funcionario_cargo) VALUES ("joão", "joao@gmail.com","782-643-597-54", 3,(SELECT id_cargo FROM funcionario f WHERE id = 3));     
 
+-- 2.3. Clientes (RF02: Cadastrados por Atendentes [Cargo 2] ou Gerente [Cargo 1])
+INSERT
+	INTO
+	cliente (
+		cpf,
+		nome_cliente,
+		email,
+		id_funcionario,
+		id_funcionario_cargo
+	)
+VALUES
+	(
+		'000-000-000-01',
+		'Marcos Vinicius Souza',
+		'marcos.souza@email.com',
+		6,
+		1
+	),
+(
+		'000-000-000-02',
+		'Fernanda Maria Oliveira',
+		'fernanda.oliveira@email.com',
+		6,
+		1
+	),
+(
+		'000-000-000-03',
+		'Roberto Carlos Andrade',
+		'roberto.andrade@email.com',
+		6,
+		1
+	),
+(
+		'000-000-000-04',
+		'Camila de Cassia Martins',
+		'camila.martins@email.com',
+		6,
+		1
+	),
+(
+		'000-000-000-05',
+		'Patricia Ferreira Lima',
+		'patricia.lima@email.com',
+		6,
+		1
+	),
+(
+		'000-000-000-06',
+		'Lucas Gabriel Barbosa',
+		'lucas.barbosa@email.com',
+		6,
+		1
+	);
+
+
 
 --CATEGORIA
 CREATE TABLE IF NOT EXISTS categoria(
@@ -149,6 +204,232 @@ VALUES
 ('Troca de Vidro Traseiro de Smartphone a Laser / Manual', 2, 18000, 2.5, 6, (SELECT id_cargo FROM funcionario WHERE id = 6)),
 ('Reparo e Solda de Conector Jack P2/P10 de Mesa de Som ou Amplificador', 6, 9500, 1.0, 6, (SELECT id_cargo FROM funcionario WHERE id = 6));
 
+
+CREATE TABLE marca (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	nome_marca TEXT NOT NULL COLLATE NOCASE UNIQUE,
+	id_funcionario INTEGER NOT NULL,
+	id_funcionario_cargo INTEGER NOT NULL CHECK (
+		id_funcionario_cargo = 1
+	OR id_funcionario_cargo = 2
+	),
+	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	status INTEGER NOT NULL DEFAULT 1,
+	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
+) STRICT;
+
+CREATE TABLE modelo (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	nome_modelo TEXT NOT NULL COLLATE NOCASE UNIQUE,
+	id_funcionario INTEGER NOT NULL,
+	id_funcionario_cargo INTEGER NOT NULL CHECK (
+		id_funcionario_cargo = 1
+	OR id_funcionario_cargo = 2
+	),
+	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	status INTEGER NOT NULL DEFAULT 1,
+	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
+) STRICT;
+
+CREATE TABLE tipo (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	nome_tipo TEXT NOT NULL COLLATE NOCASE UNIQUE,
+	id_funcionario INTEGER NOT NULL,
+	id_funcionario_cargo INTEGER NOT NULL CHECK (
+		id_funcionario_cargo = 1
+	OR id_funcionario_cargo = 2
+	),
+	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	status INTEGER NOT NULL DEFAULT 1,
+	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
+) STRICT;
+
+CREATE TABLE equipamento(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id_marca INTEGER NOT NULL,
+	id_modelo INTEGER NOT NULL,
+	id_tipo INTEGER NOT NULL,
+	id_cliente INTEGER NOT NULL,
+	id_funcionario INTEGER NOT NULL,
+	id_funcionario_cargo INTEGER NOT NULL CHECK (
+		id_funcionario_cargo = 1
+		OR id_funcionario_cargo = 2
+	),
+	numero_serie TEXT DEFAULT(NULL) COLLATE NOCASE,
+	imei TEXT DEFAULT(NULL) COLLATE NOCASE UNIQUE,
+	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	status INTEGER NOT NULL DEFAULT 1,
+	FOREIGN KEY (id_marca) REFERENCES marca(id),
+	FOREIGN KEY (id_modelo) REFERENCES modelo(id),
+	FOREIGN KEY (id_tipo) REFERENCES tipo(id),
+	FOREIGN KEY (id_cliente) REFERENCES cliente(id),
+	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
+) STRICT;
+--INSERTS DE EQUIPAMENTO, TIPO, MODELO,MARCA
+-- 2.4. Marcas (Cadastradas por Atendentes ou Gerente)
+INSERT
+	INTO
+	marca (nome_marca,
+	id_funcionario,
+	id_funcionario_cargo)
+VALUES
+	('Apple',
+6,
+1),
+('Samsung',
+7,
+1),
+('Motorola',
+7,
+1),
+('Xiaomi',
+6,
+1),
+('Dell',
+6,
+1),
+('Lenovo',
+7,
+1),
+('LG',
+7,
+1),
+('Sony',
+6,
+1);
+-- 2.5. Modelos (Cadastrados por Atendentes ou Gerente)
+INSERT
+	INTO
+	modelo (
+		nome_modelo,
+		id_funcionario,
+		id_funcionario_cargo
+	)
+VALUES
+	('iPhone 11',
+6,
+1),
+('iPhone 12',
+6,
+1),
+('Galaxy A54',
+6,
+1),
+('Galaxy A32',
+7,
+1),
+('Moto G84',
+7,
+1),
+('Moto G30',
+4,
+2),
+('Redmi Note 11',
+4,
+2),
+('Inspiron 15 3000',
+6,
+1),
+('IdeaPad 3',
+6,
+1),
+('Smart TV 50 UN50TU8000',
+7,
+1),
+('Smart TV 43 43UP7500',
+4,
+2),
+('PlayStation 5',
+7,
+1);
+-- 2.6. Tipos de Equipamento (Cadastrados por Atendentes ou Gerente)
+INSERT
+	INTO
+	tipo (nome_tipo,
+	id_funcionario,
+	id_funcionario_cargo)
+VALUES
+	('Smartphone',
+6,
+1),
+('Notebook',
+4,
+2),
+('Desktop',
+5,
+2),
+('Smart TV',
+5,
+2),
+('Console de Videogame',
+5,
+2),
+('Caixa de Som Bluetooth',
+5,
+2);
+-- 2.7. Equipamentos (RF03: Cadastrados por Atendentes ou Gerentes)
+INSERT
+	INTO
+	equipamento (
+		id_marca,
+		id_modelo,
+		id_tipo,
+		id_cliente,
+		id_funcionario,
+		id_funcionario_cargo,
+		numero_serie,
+		imei
+	)
+VALUES
+	(1,
+1,
+1,
+1,
+6,
+1,
+NULL,
+'356789012345671'),
+(2,
+3,
+1,
+2,
+6,
+1,
+NULL,
+'356789012345672'),
+(5,
+8,
+2,
+3,
+6,
+1,
+'DELL-INSP-2023-998',
+NULL),
+(7,
+10,
+4,
+4,
+6,
+1,
+'LG-TV43-77612',
+NULL),
+(8,
+12,
+5,
+5,
+6,
+1,
+'PS5-SONY-009182',
+NULL),
+(3,
+5,
+1,
+6,
+6,
+1,
+NULL,
+'356789012345673');
+
 --Peças
 CREATE TABLE IF NOT EXISTS peca(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -214,7 +495,6 @@ INSERT INTO situacao (nome, status) VALUES ("Aberto",1),("Em Diagnóstico",1);
 INSERT INTO situacao (nome, status) VALUES ("Orçamento Apovado",1),("Em reparo",1),("Pronto",1),("Entregue",1),("Cancelado",1),("Descarte por Defeito/Avaria",1),("Uso em Reparo (OS)",1);
 
 
-
 CREATE TABLE IF NOT EXISTS forma_pagamento(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	nome TEXT NOT NULL COLLATE NOCASE UNIQUE,
@@ -223,31 +503,49 @@ CREATE TABLE IF NOT EXISTS forma_pagamento(
 	id_funcionario INTEGER NOT NULL,
 	id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
 	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id,id_cargo)
-)
-
+);
+--INSERT DE PAGAMENTOS 
+-- 2.2. Formas de Pagamento (Cadastradas por Gerente - Cargo ID 1)
+INSERT INTO forma_pagamento (
+		nome,
+		id_funcionario,
+		id_funcionario_cargo
+	)
+VALUES
+	('Dinheiro',6,1),
+('PIX',6,1),
+('Cartão de Débito',6,1),
+('Cartão de Crédito - À Vista',6,1),
+('Cartão de Crédito - Parcelado',6,1),
+('Boleto Bancário',6,1);
 
 
 
 CREATE TABLE IF NOT EXISTS ordem(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	id_equipamento INTEGER NOT NULL,
-	id_funcionacio_abertura INTEGER NOT NULL,
-	id_funcionacio_cargo_abertura INTEGER NOT NULL,
-	data_abertura TEXT NOT NULL DEFAULT (DATETIME('now','localtime')),
+	defeito_relatado TEXT NOT NULL COLLATE NOCASE,
+	defeito_constatado TEXT DEFAULT('') COLLATE NOCASE,
+	data_abertura TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
 	data_fechamento TEXT,
-	defeito_relatado TEXT NOT NULL,
-	relatorio TEXT,
 	valor_total INTEGER,
 	id_forma_pagamento INTEGER NOT NULL,
 	id_funcionario_abertura INTEGER NOT NULL,
-	id_funcionario_cargo_abertura INTEGER NOT NULL CHECK (id_funcionario_cargo_abertura = 1 OR id_funcionario_cargo_abertura = 2),
+	id_funcionario_cargo_abertura INTEGER NOT NULL CHECK (
+		id_funcionario_cargo_abertura = 1
+		OR id_funcionario_cargo_abertura = 2
+	),
 	id_tecnico INTEGER NOT NULL,
 	id_tecnico_cargo INTEGER NOT NULL CHECK (id_tecnico_cargo = 3),
 	FOREIGN KEY (id_equipamento) REFERENCES equipamento(id),
 	FOREIGN KEY (id_forma_pagamento) REFERENCES forma_pagamento(id),
-	FOREIGN KEY (id_funcionario_abertura, id_funcionario_cargo_abertura) REFERENCES funcionario(id,id_cargo),
-	FOREIGN KEY (id_tecnico, id_tecnico_cargo) REFERENCES funcionario(id,id_cargo)
-)STRICT;
+	FOREIGN KEY (
+		id_funcionario_abertura,
+		id_funcionario_cargo_abertura
+	) REFERENCES funcionario(id, id_cargo),
+	FOREIGN KEY (id_tecnico, id_tecnico_cargo) REFERENCES funcionario(id, id_cargo)
+) STRICT;
+
 
 CREATE TABLE IF NOT EXISTS ordem_situacao(
 	id integer PRIMARY KEY AUTOINCREMENT,
@@ -290,7 +588,7 @@ SELECT * FROM peca p WHERE p.preco_venda > 10000;
 
 CREATE VIEW vw_preco_venda_maior_100 AS SELECT id,nome,preco_venda, estoque_atual FROM peca p WHERE p.preco_venda > 10000;
 
-SELECT * FROM vw_preco_venda_maior_100 vpvm 
+SELECT * FROM vw_preco_venda_maior_100 vpvm ;
 
 -- ==========================================
 -- 2. POPULAÇÃO DE DADOS (DML)
@@ -300,7 +598,7 @@ INSERT
 	ordem (
 		id_equipamento,
 		defeito_relatado,
-		relatorio,
+		defeito_constatado,
 		data_abertura,
 		data_fechamento,
 		valor_total,
@@ -320,9 +618,9 @@ VALUES
 		'2026-09-02 16:00:00',
 		50000,
 		2,
-		2,
-		2,
-		5,
+		6,
+		1,
+		3,
 		3
 	),
 -- OS 2: Upgrade de SSD em Notebook Dell (Pronto)
@@ -334,9 +632,9 @@ VALUES
 		'2026-09-11 14:30:00',
 		38000,
 		1,
-		3,
-		2,
 		6,
+		1,
+		3,
 		3
 	),
 -- OS 3: Smart TV em diagnóstico
@@ -348,9 +646,9 @@ VALUES
 		NULL,
 		NULL,
 		1,
-		2,
-		2,
-		5,
+		6,
+		1,
+		3,
 		3
 	),
 -- OS 4: Console PS5 (Em Reparo)
@@ -362,8 +660,8 @@ VALUES
 		NULL,
 		NULL,
 		4,
-		4,
-		2,
 		6,
+		1,
+		3,
 		3
 	);
