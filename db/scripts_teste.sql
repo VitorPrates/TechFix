@@ -856,10 +856,11 @@ AFTER INSERT ON ordem_servico
 FOR EACH ROW
 BEGIN 
 	UPDATE ordem
-	SET valor_total = valor_total + (NEW.preco_praticado + quantidade)
+	SET valor_total = valor_total + (NEW.preco_praticado * NEW.quantidade)
 	WHERE id = NEW.id_ordem;
 END;
 
+INSERT INTO ordem_servico  (id_ordem, id_servico, preco_praticado, quantidade_servicos) valoes (1,6,(SELECT preco FROM servicos WHERE id=6),1);
 
 
 CREATE TRIGGER trg_ordem_servico_atualizar_valor_total_ordem
