@@ -581,7 +581,7 @@ CREATE TABLE IF NOT EXISTS ordem_servico(
 )STRICT;
 
 -- ==========================================
--- TESTES
+-- 2. TESTES
 -- ==========================================
 
 SELECT * FROM peca p WHERE p.preco_venda > 10000;
@@ -590,9 +590,9 @@ CREATE VIEW vw_preco_venda_maior_100 AS SELECT id,nome,preco_venda, estoque_atua
 
 SELECT * FROM vw_preco_venda_maior_100 vpvm ;
 
--- ==========================================
--- 2. POPULAÇÃO DE DADOS (DML)
--- ==========================================
+
+
+--INSERTS para ordens
 INSERT
 	INTO
 	ordem (
@@ -665,3 +665,220 @@ VALUES
 		3,
 		3
 	);
+
+-- 2.10. Histórico de Mudanças de Status da OS (RF07)
+INSERT
+	INTO
+	ordem_situacao (id_ordem,
+	id_nova_situacao,
+	id_funcionario,
+	data_situacao)
+VALUES
+-- OS 1 (Aberto -> Em Diagnóstico -> Orçamento Aprovado -> Em Reparo -> Pronto -> Entregue)
+	(1,1,6,'2026-09-01 09:30:00'),
+	(1,2,7,'2026-09-01 10:00:00'),
+	(1,3,6,'2026-09-01 11:30:00'),
+	(1,4,7,'2026-09-01 14:00:00'),
+	(1,5,6,'2026-09-02 15:30:00'),
+	(1,6,6,'2026-09-02 16:00:00'),
+-- OS 2 (Aberto -> Orçamento Aprovado -> Em Reparo -> Pronto)
+	(2,1,7,'2026-09-10 10:15:00'),
+	(2,3,7,'2026-09-10 10:45:00'),
+	(2,4,6,'2026-09-10 11:00:00'),
+	(2,5,6,'2026-09-11 14:30:00'),
+-- OS 3 (Aberto -> Em Diagnóstico)
+	(3,1,6,'2026-09-15 11:00:00'),
+	(3,2,6,'2026-09-15 15:00:00'),
+-- OS 4 (Aberto -> Orçamento Aprovado -> Em Reparo)
+	(4,1,6,'2026-09-20 14:20:00'),
+	(4,3,6,'2026-09-20 15:00:00'),
+	(4,4,7,'2026-09-20 16:00:00');
+
+-- 2.11. Peças Utilizadas nas Ordens de Serviço (RF11 / RN01 / RN02)
+-- Valores de venda congelados na data do vínculo
+INSERT
+	INTO
+	ordem_peca (id_ordem,
+	id_peca,
+	preco,
+	quantidade,
+	data_saida)
+VALUES
+	(1,
+11,
+35000,
+1,
+'2026-09-01 14:30:00'),
+-- Tela iPhone 11 para OS 1
+	(2,
+1,
+26000,
+1,
+'2026-09-10 11:30:00');
+-- SSD NVMe 512GB para OS 2
+-- 2.12. Serviços Executados nas Ordens de Serviço (RF06 / RN02)
+-- Valores dos serviços congelados na data da execução
+INSERT
+	INTO
+	ordem_servico (
+		id_ordem,
+		id_servico,
+		preco_praticado,
+		quantidade_servicos,
+		data_execucao
+	)
+VALUES
+	(1,
+6,
+15000,
+1,
+'2026-09-01 15:00:00'),
+-- Troca de Display Frontal
+	(2,
+1,
+12000,
+1,
+'2026-09-10 13:00:00'),
+-- Formatação e Instalação
+	(3,
+10,
+35000,
+1,
+'2026-09-15 16:00:00'),
+-- Troca Barra de LED TV
+	(4,
+14,
+22000,
+1,
+'2026-09-20 16:30:00');
+
+
+-- ==========================================
+-- 3. VIEWS E CONSULTAS DE TESTE
+-- ==========================================
+CREATE VIEW vw_preco_venda_maior_100 AS
+SELECT
+	id,
+	nome_peca,
+	preco_venda AS 'preço',
+	estoque_atual
+FROM
+	peca
+WHERE
+	preco_venda >= 10000;
+
+CREATE VIEW vw_estoque_baixo AS
+SELECT
+	id,
+	nome_peca,
+	estoque_atual
+FROM
+	peca
+WHERE
+	estoque_atual <= 20
+ORDER BY
+	estoque_atual DESC;
+-- Execução das consultas
+SELECT
+	*
+FROM
+	peca
+WHERE
+	preco_venda <= 10000;
+
+SELECT
+	*
+FROM
+	vw_preco_venda_maior_100;
+
+SELECT
+	*
+FROM
+	vw_estoque_baixo;
+
+SELECT
+	f.nome_funcionario AS 'nome',
+	c.nome_cargo AS 'cargo'
+FROM
+	funcionario f
+JOIN cargo c ON
+	f.id_cargo = c.id;
+
+SELECT
+	*
+FROM
+	ordem;
+-- Informação consolidada das OS abertas
+SELECT
+	o.id AS 'ordem_serviço',
+	m.nome_modelo AS 'modelo',
+	o.defeito_constatado,
+	o.defeito_relatado,
+	fp.nome_forma_pagamento 'forma_pagto',
+	f.nome_funcionario 'aberto_por',
+	f2.nome_funcionario 'atendido_por'
+FROM
+	ordem o
+JOIN equipamento e ON
+	o.id_equipamento = e.id
+JOIN modelo m ON
+	e.id = m.id
+JOIN forma_pagamento fp ON
+	o.id_forma_pagamento = fp.id
+JOIN funcionario f ON
+	o.id_funcionario_abertura = f.id
+JOIN funcionario f2 ON
+	o.id_tecnico = f2.id;
+-- SELECT E JOIN PARA VERIFICAR O STATUS DE REPARO DE UM EQUIPAMENTO, COM FILTRO POR OS
+SELECT
+	os.id_ordem AS 'OS',
+	m.nome_modelo AS 'Modelo',
+	s.nome_situacao AS "Situação",
+	os.data_situacao AS 'Data'
+FROM
+	ordem_situacao os
+JOIN ordem o ON
+	os.id_ordem = o.id
+JOIN situacao s ON
+	os.id_nova_situacao = s.id
+JOIN equipamento e ON
+	o.id_equipamento = e.id
+JOIN modelo m ON
+	e.id_modelo = m.id
+WHERE
+	os.id_ordem = 1;
+
+-- ==========================================
+-- 4. TRIGGERS
+-- ==========================================
+CREATE TRIGGER trg_ordem_servico_atualizar_valor_total_ordem
+AFTER INSERT ON ordem_servico
+FOR EACH ROW
+BEGIN 
+	UPDATE ordem
+	SET valor_total = valor_total + (NEW.preco_praticado + quantidade)
+	WHERE id = NEW.id_ordem;
+END;
+
+
+
+CREATE TRIGGER trg_ordem_servico_atualizar_valor_total_ordem
+AFTER INSERT ON ordem_servico
+FOR EACH ROW
+BEGIN 
+	UPDATE ordem
+	SET valor_total = valor_total + (NEW.preco_praticado + quantidade)
+	WHERE id = NEW.id_ordem;
+END;
+
+
+
+
+
+
+
+
+
+
+
+
