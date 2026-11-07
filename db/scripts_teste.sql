@@ -519,6 +519,32 @@ VALUES
 ('Cartão de Crédito - Parcelado',6,1),
 ('Boleto Bancário',6,1);
 
+CREATE TABLE entrada_peca(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id_peca INTEGER NOT NULL,
+	preco_compra INTEGER NOT NULL,
+	quantidade INTEGER NOT NULL,
+	id_funcionario INTEGER NOT NULL,
+	id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
+	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	FOREIGN KEY (id_peca) REFERENCES peca(id),
+	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
+) STRICT;
+
+CREATE TABLE saida_peca(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id_peca INTEGER NOT NULL,
+	preco_venda INTEGER NOT NULL,
+	quantidade INTEGER NOT NULL,
+	id_situacao INTEGER NOT NULL,
+	id_funcionario INTEGER NOT NULL,
+	id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
+	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	FOREIGN KEY (id_peca) REFERENCES peca(id),
+	FOREIGN KEY (id_situacao) REFERENCES situacao(id),
+	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
+) STRICT;
+
 
 
 CREATE TABLE IF NOT EXISTS ordem(
@@ -752,6 +778,86 @@ VALUES
 1,
 '2026-09-20 16:30:00');
 
+-- 2.8. Entradas de Peças (RF09: Compra/Reposição realizada por Gerente [Cargo ID 1])
+-- Preços gravados em centavos (ex: R$ 180,00 -> 18000)
+INSERT
+	INTO
+	entrada_peca (
+		id_peca,
+		preco_compra,
+		quantidade,
+		id_funcionario,
+		id_funcionario_cargo
+	)
+VALUES
+	(1,
+18000,
+20,
+7,
+1),
+-- SSD NVMe
+	(3,
+11000,
+15,
+6,
+1),
+-- RAM DDR4
+	(11,
+22000,
+10,
+6,
+1),
+-- Tela iPhone 11
+	(14,
+9000,
+12,
+7,
+1),
+-- Bateria iPhone 11
+	(23,
+14000,
+8,
+6,
+1);
+-- Barra LED TV Samsung
+
+-- 2.13. Baixa/Saída de Peças (RF10)
+-- Motivos: Uso em Reparo (Situação ID 4 - Em Reparo) ou Descarte (Situação ID 8)
+INSERT
+	INTO
+	saida_peca (
+		id_peca,
+		preco_venda,
+		quantidade,
+		id_situacao,
+		id_funcionario,
+		id_funcionario_cargo
+	)
+VALUES
+	(11,
+35000,
+1,
+4,
+6,
+1),
+-- Peça baixada para uso na OS 1
+	(1,
+26000,
+1,
+4,
+7,
+1),
+-- Peça baixada para uso na OS 2
+	(5,
+6000,
+1,
+8,
+7,
+1);
+-- Peça baixada por Descarte por Defeito/Avaria
+
+
+
 
 -- ==========================================
 -- 3. VIEWS E CONSULTAS DE TESTE
@@ -860,7 +966,6 @@ BEGIN
 	WHERE id = NEW.id_ordem;
 END;
 
-INSERT INTO ordem_servico  (id_ordem, id_servico, preco_praticado, quantidade_servicos) valoes (1,6,(SELECT preco FROM servicos WHERE id=6),1);
 
 
 CREATE TRIGGER trg_ordem_servico_atualizar_valor_total_ordem
