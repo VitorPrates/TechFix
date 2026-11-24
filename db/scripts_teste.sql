@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS cliente(
 	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id,id_cargo)
 )STRICT;
 
-INSERT INTO cliente (nome_cliente, email,cpf, id_funcionario, id_funcionario_cargo) VALUES ("joão", "joao@gmail.com","782-643-597-54", 3,(SELECT id_cargo FROM funcionario f WHERE id = 3));     
+INSERT INTO cliente (nome_cliente, email,cpf, id_funcionario, id_funcionario_cargo) VALUES ("joão", "joao@gmail.com","782-643-597-54", 6,(SELECT id_cargo FROM funcionario f WHERE id = 6));     
 
 -- 2.3. Clientes (RF02: Cadastrados por Atendentes [Cargo 2] ou Gerente [Cargo 1])
 INSERT
@@ -487,13 +487,38 @@ CREATE TABLE IF NOT EXISTS situacao(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	nome TEXT NOT NULL COLLATE NOCASE UNIQUE,
 	status INTEGER NOT NULL DEFAULT 1
-)
+);
 -- aberto, em diag, orçamento aprovado, em reparo, pronto, entregue, cancelado, descarte por defeito/avaria, Uso em Reparo (os)
 --teste
 INSERT INTO situacao (nome, status) VALUES ("Aberto",1),("Em Diagnóstico",1);
 --todos
 INSERT INTO situacao (nome, status) VALUES ("Orçamento Apovado",1),("Em reparo",1),("Pronto",1),("Entregue",1),("Cancelado",1),("Descarte por Defeito/Avaria",1),("Uso em Reparo (OS)",1);
 
+CREATE TABLE entrada_peca(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id_peca INTEGER NOT NULL,
+	preco_compra INTEGER NOT NULL,
+	quantidade INTEGER NOT NULL,
+	id_funcionario INTEGER NOT NULL,
+	id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
+	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	FOREIGN KEY (id_peca) REFERENCES peca(id),
+	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
+) STRICT;
+
+CREATE TABLE saida_peca(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id_peca INTEGER NOT NULL,
+	preco_venda INTEGER NOT NULL,
+	quantidade INTEGER NOT NULL,
+	id_situacao INTEGER NOT NULL,
+	id_funcionario INTEGER NOT NULL,
+	id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
+	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	FOREIGN KEY (id_peca) REFERENCES peca(id),
+	FOREIGN KEY (id_situacao) REFERENCES situacao(id),
+	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
+) STRICT;
 
 CREATE TABLE IF NOT EXISTS forma_pagamento(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -518,32 +543,6 @@ VALUES
 ('Cartão de Crédito - À Vista',6,1),
 ('Cartão de Crédito - Parcelado',6,1),
 ('Boleto Bancário',6,1);
-
-CREATE TABLE entrada_peca(
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	id_peca INTEGER NOT NULL,
-	preco_compra INTEGER NOT NULL,
-	quantidade INTEGER NOT NULL,
-	id_funcionario INTEGER NOT NULL,
-	id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
-	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-	FOREIGN KEY (id_peca) REFERENCES peca(id),
-	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
-) STRICT;
-
-CREATE TABLE saida_peca(
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	id_peca INTEGER NOT NULL,
-	preco_venda INTEGER NOT NULL,
-	quantidade INTEGER NOT NULL,
-	id_situacao INTEGER NOT NULL,
-	id_funcionario INTEGER NOT NULL,
-	id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
-	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-	FOREIGN KEY (id_peca) REFERENCES peca(id),
-	FOREIGN KEY (id_situacao) REFERENCES situacao(id),
-	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
-) STRICT;
 
 
 
@@ -778,90 +777,12 @@ VALUES
 1,
 '2026-09-20 16:30:00');
 
--- 2.8. Entradas de Peças (RF09: Compra/Reposição realizada por Gerente [Cargo ID 1])
--- Preços gravados em centavos (ex: R$ 180,00 -> 18000)
-INSERT
-	INTO
-	entrada_peca (
-		id_peca,
-		preco_compra,
-		quantidade,
-		id_funcionario,
-		id_funcionario_cargo
-	)
-VALUES
-	(1,
-18000,
-20,
-7,
-1),
--- SSD NVMe
-	(3,
-11000,
-15,
-6,
-1),
--- RAM DDR4
-	(11,
-22000,
-10,
-6,
-1),
--- Tela iPhone 11
-	(14,
-9000,
-12,
-7,
-1),
--- Bateria iPhone 11
-	(23,
-14000,
-8,
-6,
-1);
--- Barra LED TV Samsung
-
--- 2.13. Baixa/Saída de Peças (RF10)
--- Motivos: Uso em Reparo (Situação ID 4 - Em Reparo) ou Descarte (Situação ID 8)
-INSERT
-	INTO
-	saida_peca (
-		id_peca,
-		preco_venda,
-		quantidade,
-		id_situacao,
-		id_funcionario,
-		id_funcionario_cargo
-	)
-VALUES
-	(11,
-35000,
-1,
-4,
-6,
-1),
--- Peça baixada para uso na OS 1
-	(1,
-26000,
-1,
-4,
-7,
-1),
--- Peça baixada para uso na OS 2
-	(5,
-6000,
-1,
-8,
-7,
-1);
--- Peça baixada por Descarte por Defeito/Avaria
-
-
-
 
 -- ==========================================
 -- 3. VIEWS E CONSULTAS DE TESTE
 -- ==========================================
+
+--View de teste, produtos com preço maior que 100
 CREATE VIEW vw_preco_venda_maior_100 AS
 SELECT
 	id,
@@ -873,6 +794,7 @@ FROM
 WHERE
 	preco_venda >= 10000;
 
+--View de teste, produtos com estoque menor  que 20
 CREATE VIEW vw_estoque_baixo AS
 SELECT
 	id,
@@ -891,17 +813,14 @@ FROM
 	peca
 WHERE
 	preco_venda <= 10000;
-
 SELECT
 	*
 FROM
 	vw_preco_venda_maior_100;
-
 SELECT
 	*
 FROM
 	vw_estoque_baixo;
-
 SELECT
 	f.nome_funcionario AS 'nome',
 	c.nome_cargo AS 'cargo'
@@ -909,7 +828,6 @@ FROM
 	funcionario f
 JOIN cargo c ON
 	f.id_cargo = c.id;
-
 SELECT
 	*
 FROM
@@ -954,9 +872,194 @@ JOIN modelo m ON
 WHERE
 	os.id_ordem = 1;
 
+
+--Retorna apenas a última situação registrada no histórico de cada ordem de serviço.
+CREATE VIEW vw_ordem_situacao_atual AS
+SELECT
+    os.id_ordem,
+    os.id_nova_situacao AS id_situacao,
+    s.nome AS situacao,
+    os.data_situacao,
+    f.nome_funcionario AS responsavel
+FROM ordem_situacao os
+JOIN situacao s
+    ON s.id = os.id_nova_situacao
+JOIN funcionario f
+    ON f.id = os.id_funcionario
+WHERE os.id = (
+    SELECT os2.id
+    FROM ordem_situacao os2
+    WHERE os2.id_ordem = os.id_ordem
+    ORDER BY os2.data_situacao DESC, os2.id DESC
+    LIMIT 1
+);
+SELECT * FROM vw_ordem_situacao_atual;
+
+--Retorna as principais informações de uma ordem de serviço, evitando a repetição de diversos JOINs no backend.
+CREATE VIEW vw_ordens_completas AS
+SELECT
+    o.id AS id_ordem,
+    c.nome_cliente AS cliente,
+    ma.nome_marca AS marca,
+    m.nome_modelo AS modelo,
+    t.nome_tipo AS tipo,
+    o.defeito_relatado,
+    o.defeito_constatado,
+    o.data_abertura,
+    o.data_fechamento,
+    sa.situacao,
+    f.nome_funcionario AS aberto_por,
+    ft.nome_funcionario AS tecnico,
+    fp.nome AS forma_pagamento,
+    o.valor_total / 100.0 AS valor_total
+FROM ordem o
+JOIN equipamento e
+    ON e.id = o.id_equipamento
+JOIN cliente c
+    ON c.id = e.id_cliente
+JOIN marca ma
+    ON ma.id = e.id_marca
+JOIN modelo m
+    ON m.id = e.id_modelo
+JOIN tipo t
+    ON t.id = e.id_tipo
+JOIN funcionario f
+    ON f.id = o.id_funcionario_abertura
+JOIN funcionario ft
+    ON ft.id = o.id_tecnico
+LEFT JOIN forma_pagamento fp
+    ON fp.id = o.id_forma_pagamento
+LEFT JOIN vw_ordem_situacao_atual sa
+    ON sa.id_ordem = o.id;
+
+SELECT * FROM vw_ordens_completas
+WHERE id_ordem = 1;
+
+-- Retorna todas as ordens que ainda precisam de acompanhamento.
+CREATE VIEW vw_ordens_abertas AS
+SELECT *
+FROM vw_ordens_completas
+WHERE situacao NOT IN ('Entregue', 'Cancelado')
+   OR situacao IS NULL;
+
+select * from vw_ordens_abertas;
+
+-- Garantir rastreabilidade das alterações realizadas durante o atendimento.
+CREATE VIEW vw_historico_ordem AS
+SELECT
+    os.id,
+    os.id_ordem,
+    s.nome AS situacao,
+    f.nome_funcionario AS responsavel,
+    c.nome_cargo AS cargo,
+    os.data_situacao
+FROM ordem_situacao os
+JOIN situacao s
+    ON s.id = os.id_nova_situacao
+JOIN funcionario f
+    ON f.id = os.id_funcionario
+JOIN cargo c
+    ON c.id = f.id_cargo;
+
+SELECT *
+FROM vw_historico_ordem
+WHERE id_ordem = 1
+ORDER BY data_situacao, id;
+
+
+--Apresenta informações completas do estoque, incluindo o valor estimado das mercadorias armazenadas.
+CREATE VIEW vw_estoque_atual AS
+SELECT
+    p.id,
+    p.nome AS peca,
+    c.nome AS categoria,
+    p.estoque_atual,
+    p.preco_compra / 100.0 AS preco_compra,
+    p.preco_venda / 100.0 AS preco_venda,
+    (p.preco_compra * p.estoque_atual) / 100.0
+        AS valor_estoque_custo,
+    (p.preco_venda * p.estoque_atual) / 100.0
+        AS valor_estoque_venda
+FROM peca p
+JOIN categoria c
+    ON c.id = p.id_categoria
+WHERE p.status = 1;
+
+Select * from vw_estoque_atual;
+
+-- consolidar as entradas e saídas em uma única consulta para auditoria.
+CREATE VIEW vw_movimentacao_estoque AS
+SELECT
+    ep.id,
+    ep.id_peca,
+    p.nome AS peca,
+    'ENTRADA' AS movimentacao,
+    'Reposição' AS motivo,
+    ep.quantidade,
+    ep.preco_compra / 100.0 AS valor_unitario,
+    ep.data_cadastro AS data_movimentacao,
+    f.nome_funcionario AS responsavel
+FROM entrada_peca ep
+JOIN peca p ON p.id = ep.id_peca
+JOIN funcionario f ON f.id = ep.id_funcionario
+UNION ALL
+SELECT
+    sp.id,
+    sp.id_peca,
+    p.nome AS peca,
+    'SAIDA' AS movimentacao,
+    s.nome AS motivo,
+    sp.quantidade,
+    sp.preco_venda / 100.0 AS valor_unitario,
+    sp.data_cadastro AS data_movimentacao,
+    f.nome_funcionario AS responsavel
+FROM saida_peca sp
+JOIN peca p ON p.id = sp.id_peca
+JOIN situacao s ON s.id = sp.id_situacao
+JOIN funcionario f ON f.id = sp.id_funcionario;
+
+-- calcular o valor financeiro de cada ordem utilizando exclusivamente os valores históricos praticados.
+-- RN02 e RN04.
+-- COALESCE = fundir
+
+CREATE VIEW vw_ordem_valor_total AS
+SELECT
+    o.id AS id_ordem,
+
+    COALESCE((
+        SELECT SUM(os.preco_praticado *
+                   os.quantidade_servicos)
+        FROM ordem_servico os
+        WHERE os.id_ordem = o.id
+    ), 0) AS total_servicos,
+
+    COALESCE((
+        SELECT SUM(op.preco * op.quantidade)
+        FROM ordem_peca op
+        WHERE op.id_ordem = o.id
+    ), 0) AS total_pecas,
+
+    COALESCE((
+        SELECT SUM(os.preco_praticado *
+                   os.quantidade_servicos)
+        FROM ordem_servico os
+        WHERE os.id_ordem = o.id
+    ), 0)
+    +
+    COALESCE((
+        SELECT SUM(op.preco * op.quantidade)
+        FROM ordem_peca op
+        WHERE op.id_ordem = o.id
+    ), 0) AS valor_total
+FROM ordem o;
+
+select * from vw_ordem_valor_total;
+
 -- ==========================================
 -- 4. TRIGGERS
 -- ==========================================
+
+--trigger de teste, atualiza valor total da ordem de serviço
 CREATE TRIGGER trg_ordem_servico_atualizar_valor_total_ordem
 AFTER INSERT ON ordem_servico
 FOR EACH ROW
@@ -966,25 +1069,229 @@ BEGIN
 	WHERE id = NEW.id_ordem;
 END;
 
+INSERT INTO ordem_servico (id_ordem, id_servico, preco_praticado, quantidade_servicos) values (1,6,(SELECT preco FROM servicos WHERE id=6),1);
 
-
-CREATE TRIGGER trg_ordem_servico_atualizar_valor_total_ordem
-AFTER INSERT ON ordem_servico
+-- sempre que uma ordem de serviço for criada, registrar automaticamente sua primeira situação como "Aberto".
+CREATE TRIGGER trg_ordem_situacao_inicial
+AFTER INSERT ON ordem
 FOR EACH ROW
-BEGIN 
-	UPDATE ordem
-	SET valor_total = valor_total + (NEW.preco_praticado + quantidade)
-	WHERE id = NEW.id_ordem;
+BEGIN
+
+    INSERT INTO ordem_situacao (
+        id_ordem,
+        id_nova_situacao,
+        id_funcionario,
+        data_situacao
+    )
+    VALUES (
+        NEW.id,
+        1,
+        NEW.id_funcionario_abertura,
+        NEW.data_abertura
+    );
+
+END;
+
+-- atualizar automaticamente o saldo disponível sempre que uma reposição for registrada.
+CREATE TRIGGER trg_entrada_atualizar_estoque
+AFTER INSERT ON entrada_peca
+FOR EACH ROW
+BEGIN
+
+    UPDATE peca
+    SET estoque_atual = estoque_atual + NEW.quantidade
+    WHERE id = NEW.id_peca;
+
 END;
 
 
+-- Impedir a saída de uma quantidade superior ao saldo disponível ou de uma quantidade inválida.
+-- RF08 e RF09
 
+CREATE TRIGGER trg_saida_validar_estoque
+BEFORE INSERT ON saida_peca
+FOR EACH ROW
+BEGIN
 
+    SELECT CASE
 
+        WHEN NEW.quantidade <= 0
+        THEN RAISE(
+            ABORT,
+            'Quantidade de saida invalida.'
+        )
 
+        WHEN NEW.quantidade > (
+            SELECT estoque_atual
+            FROM peca
+            WHERE id = NEW.id_peca
+        )
+        THEN RAISE(
+            ABORT,
+            'Estoque insuficiente para realizar a saida.'
+        )
 
+    END;
 
+END;
 
+--garantir que uma peça somente possa sair do estoque pelos dois motivos previstos no documento:
+-- Uso em Reparo (OS).
+-- Descarte por Defeito/Avaria.
+CREATE TRIGGER trg_saida_validar_motivo
+BEFORE INSERT ON saida_peca
+FOR EACH ROW
+BEGIN
 
+    SELECT CASE
 
+        WHEN NEW.id_situacao NOT IN (8, 9)
+
+        THEN RAISE(
+            ABORT,
+            'Motivo de saida nao permitido.'
+        )
+    END;
+END;
+
+-- Reduzir automaticamente o estoque após uma saída autorizada.
+CREATE TRIGGER trg_saida_atualizar_estoque
+AFTER INSERT ON saida_peca
+FOR EACH ROW
+BEGIN
+
+    UPDATE peca
+    SET estoque_atual = estoque_atual - NEW.quantidade
+    WHERE id = NEW.id_peca;
+
+END;
+
+-- impedir a associação de uma peça a uma ordem que não esteja em "Orçamento Aprovado" ou "Em Reparo".
+-- RN01
+CREATE TRIGGER trg_ordem_peca_validar_situacao
+BEFORE INSERT ON ordem_peca
+FOR EACH ROW
+BEGIN
+
+    SELECT CASE
+
+        WHEN COALESCE((
+            SELECT id_situacao
+            FROM vw_ordem_situacao_atual
+            WHERE id_ordem = NEW.id_ordem
+        ), 0) NOT IN (3, 4)
+
+        THEN RAISE(
+            ABORT,
+            'A OS nao esta autorizada a utilizar pecas.'
+        )
+    END;
+END;
+
+-- Ao vincular uma peça a uma ordem de serviço, gerar automaticamente um registro na tabela
+CREATE TRIGGER trg_ordem_peca_gerar_saida
+AFTER INSERT ON ordem_peca
+FOR EACH ROW
+BEGIN
+    INSERT INTO saida_peca (
+        id_peca,
+        preco_venda,
+        quantidade,
+        id_situacao,
+        id_funcionario,
+        id_funcionario_cargo,
+        data_cadastro
+    )
+    SELECT
+        NEW.id_peca,
+        NEW.preco,
+        NEW.quantidade,
+        9,
+        o.id_tecnico,
+        o.id_tecnico_cargo,
+        NEW.data_saida
+    FROM ordem o
+    WHERE o.id = NEW.id_ordem;
+END;
+
+-- Atualiza do valor total por peça
+CREATE TRIGGER trg_ordem_peca_atualizar_total
+AFTER INSERT ON ordem_peca
+FOR EACH ROW
+BEGIN
+
+    UPDATE ordem
+    SET valor_total = (
+        SELECT valor_total
+        FROM vw_ordem_valor_total
+        WHERE id_ordem = NEW.id_ordem
+    )
+    WHERE id = NEW.id_ordem;
+
+END;
+
+--proteção complementar, Trigger que impede alterações nos valores de ordens encerradas.
+CREATE TRIGGER trg_ordem_servico_proteger_historico
+BEFORE UPDATE ON ordem_servico
+FOR EACH ROW
+WHEN EXISTS (
+    SELECT 1
+    FROM vw_ordem_situacao_atual
+    WHERE id_ordem IN (OLD.id_ordem, NEW.id_ordem)
+      AND id_situacao IN (6, 7)
+)
+BEGIN
+
+    SELECT RAISE(
+        ABORT,
+        'Nao e permitido alterar uma OS encerrada.'
+    );
+
+END;
+
+--Validação das situações da OS
+CREATE TRIGGER trg_ordem_situacao_validar
+BEFORE INSERT ON ordem_situacao
+FOR EACH ROW
+BEGIN
+
+    SELECT CASE
+
+        WHEN NEW.id_nova_situacao
+             NOT IN (1, 2, 3, 4, 5, 6, 7)
+
+        THEN RAISE(
+            ABORT,
+            'Situacao invalida para ordem de servico.'
+        )
+    END;
+END;
+
+--Fechamento automático da OS
+CREATE TRIGGER trg_ordem_situacao_fechamento
+AFTER INSERT ON ordem_situacao
+FOR EACH ROW
+WHEN NEW.id_nova_situacao IN (6, 7)
+BEGIN
+
+    UPDATE ordem
+    SET
+        data_fechamento = NEW.data_situacao,
+
+        valor_total = (
+            SELECT valor_total
+            FROM vw_ordem_valor_total
+            WHERE id_ordem = NEW.id_ordem
+        )
+
+    WHERE id = NEW.id_ordem
+      AND NEW.id = (
+          SELECT id
+          FROM ordem_situacao
+          WHERE id_ordem = NEW.id_ordem
+          ORDER BY data_situacao DESC, id DESC
+          LIMIT 1
+      );
+
+END;
 
